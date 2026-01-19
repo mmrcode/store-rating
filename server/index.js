@@ -17,6 +17,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/stores', storeRoutes);
 
+// Error Handler (Must be last)
+app.use(require('./src/middleware/errorHandler'));
+
 app.get('/', (req, res) => {
     res.send('Store Rating API is running');
 });

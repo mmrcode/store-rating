@@ -28,6 +28,7 @@ A full-stack web application that allows users to browse stores, submit ratings,
   - See listing of users who submitted ratings.
   - Monitor feedback in real-time.
 
+
 ### 3. Normal User 👤
 - **Browsing**: 
   - Search stores by Name, Address, or Email.
@@ -36,6 +37,30 @@ A full-stack web application that allows users to browse stores, submit ratings,
   - Submit ratings (1-5 stars) for any store.
   - Update previously submitted ratings.
   - View personal ratings alongside overall store ratings.
+
+---
+
+## 📂 Project Architecture
+
+```
+store-rating/
+├── 📂 client/              # Frontend (React + Vite)
+│   ├── 📂 src/
+│   │   ├── 📂 api/         # Axios setup
+│   │   ├── 📂 components/  # Reusable UI components
+│   │   ├── 📂 pages/       # Route components (Dashboards, etc.)
+│   │   └── main.jsx        # Entry point
+│   └── .env                # Frontend environment variables
+├── 📂 server/              # Backend (Express + Node.js)
+│   ├── 📂 src/
+│   │   ├── 📂 controllers/ # Route logic
+│   │   ├── 📂 middleware/  # Auth & Validation
+│   │   ├── 📂 routes/      # Express routes
+│   │   └── db.js           # Supabase connection
+│   ├── seed.js             # Database seeder
+│   └── index.js            # Server entry point
+└── README.md
+```
 
 ---
 
@@ -92,13 +117,57 @@ npm run dev
 
 ---
 
-## 🗄️ Database Schema
+## � Role Credentials (Test Accounts)
 
-The application uses **Supabase (PostgreSQL)**. Below is a high-level overview of the tables:
+Use the following credentials to test different user roles:
 
-- **users**: Extends Supabase Auth users with roles (`admin`, `store_owner`, `normal`) and address.
-- **stores**: Contains store details (`name`, `email`, `address`, `owner_id`).
-- **ratings**: Links users and stores with a rating value (1-5).
+| Role | Email | Password |
+| :--- | :--- | :--- |
+| **Store Owner** | `owner1@store.com` | `Password123!` |
+| **Store Owner** | `owner2@store.com` | `Password123!` |
+| **Normal User** | `user1@test.com` | `Password123!` |
+| **Normal User** | `user2@test.com` | `Password123!` |
+
+> [!NOTE]
+> There is no default **Admin** account seeded. You can create one by signing up a new user and manually updating their role to `admin` in the database or via Supabase dashboard.
+
+---
+
+## �🗄️ Database Schema
+
+The application uses **Supabase (PostgreSQL)**. Here is the core schema design:
+
+```sql
+-- Users Table (Extends Supabase Auth)
+CREATE TABLE users (
+  id UUID PRIMARY KEY REFERENCES auth.users(id),
+  email TEXT UNIQUE NOT NULL,
+  role TEXT CHECK (role IN ('admin', 'store_owner', 'normal')) DEFAULT 'normal',
+  name TEXT NOT NULL,
+  address TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Stores Table
+CREATE TABLE stores (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  address TEXT NOT NULL,
+  owner_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Ratings Table
+CREATE TABLE ratings (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  store_id UUID REFERENCES stores(id) ON DELETE CASCADE,
+  rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(user_id, store_id) -- One rating per user per store
+);
+```
 
 ---
 
@@ -113,6 +182,25 @@ The application uses **Supabase (PostgreSQL)**. Below is a high-level overview o
 | `POST` | `/api/stores` | Create new store | Admin |
 | `POST` | `/api/stores/rating` | Submit/Update rating | Normal User |
 | `GET` | `/api/stores/dashboard` | Store statistics | Store Owner |
+
+---
+
+## 🛡️ Validations & Security
+
+### Input Validation
+All API requests are strictly validated using `express-validator`:
+
+- **Users**: 
+  - Name: 20-60 characters
+  - Password: 8-16 chars, must include 1 uppercase & 1 special char (`!@#$%^&*`)
+  - Address: Max 400 characters
+- **Stores**: Name, Email, and Address are required
+- **Ratings**: Must be an integer between 1 and 5
+
+### Security Measures
+- **JWT Authentication**: Secured via Supabase Auth.
+- **Role-Based Access Control (RBAC)**: Custom middleware ensures acts are performed by authorized roles only.
+- **Data Protection**: Sensitive actions (like creating stores) are restricted to Admins.
 
 ---
 
