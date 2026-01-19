@@ -1,6 +1,9 @@
-node_modules/
+node_modules
 .env
-dist/
+dist
+build
 .DS_Store
-coverage/
-.vscode/
+coverage
+.vscode
+.idea
+*.log

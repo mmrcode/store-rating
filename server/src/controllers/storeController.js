@@ -1,64 +1,92 @@
 const supabase = require('../db');
 
 exports.getStores = async (req, res) => {
-    // Uses 'stores_with_ratings' VIEW for scalable sorting
+    // Return stores with ratings
+    // For Admin: Name, Email, Address, Rating
+    // For User: Name, Address, Overall Rating, User's Rating
+
     const { role, id: userId } = req.user;
-    const { search } = req.query;
+    const { search, filter } = req.query;
 
-    let query = supabase.from('stores_with_ratings').select('*');
+    // Base query
+    let query = supabase.from('stores').select(`
+        *,
+        ratings (
+            rating,
+            user_id
+        )
+    `);
 
-    // Search
+    // Search by Name or Address or Email
     if (search) {
         query = query.or(`name.ilike.%${search}%,address.ilike.%${search}%,email.ilike.%${search}%`);
     }
 
-    // Sorting (Database Level)
+    // Sorting
     if (req.query.sort) {
-        const [field, order] = req.query.sort.split(':');
-        // 'rating' column now exists in the VIEW
-        query = query.order(field, { ascending: order === 'asc' });
+        const [field, order] = req.query.sort.split(':'); // e.g., name:asc
+        if (field === 'rating') {
+            // Sorting by calculated field (rating) is hard in SQL/Supabase without a view or computed column.
+            // We will sort in memory after fetching for now.
+        } else {
+            query = query.order(field, { ascending: order === 'asc' });
+        }
     } else {
         query = query.order('created_at', { ascending: false });
     }
 
     const { data: stores, error } = await query;
 
-    if (error) {
-        // Fallback for when View is not created yet (Optional robustness)
-        if (error.code === '42P01') { // undefined_table
-            return res.status(500).json({ error: "Database View missing. Please run 'server/db/views.sql' in Supabase." });
+    if (error) return res.status(400).json({ error: error.message });
+
+    // Process ratings
+    let result = stores.map(store => {
+        const ratings = store.ratings || [];
+        const count = ratings.length;
+        const sum = ratings.reduce((a, b) => a + b.rating, 0);
+        const avgRating = count > 0 ? parseFloat((sum / count).toFixed(1)) : 0;
+
+        // Custom fields based on role
+        if (role === 'admin') {
+            return {
+                id: store.id,
+                name: store.name,
+                email: store.email,
+                address: store.address,
+                rating: avgRating,
+                owner_id: store.owner_id
+            };
+        } else if (role === 'normal') {
+            const myRating = ratings.find(r => r.user_id === userId);
+            return {
+                id: store.id,
+                name: store.name,
+                address: store.address,
+                overallRating: avgRating,
+                myRating: myRating ? myRating.rating : null
+            };
+        } else {
+            // Store Owner or generic
+            return {
+                id: store.id,
+                name: store.name,
+                email: store.email,
+                address: store.address,
+                rating: avgRating
+            };
         }
-        return res.status(400).json({ error: error.message });
-    }
+    });
 
-    // Transform for response if needed
-    // The view returns: id, name, email, address, owner_id, rating, rating_count
-    // We might need to fetch 'myRating' for normal users still.
-
-    let result = stores;
-
-    // Append 'myRating' for Normal users. 
-    // This part is less efficient but necessary unless we have a complex view with user context.
-    // For scalability with millions of stores, you'd fetch myRatings separately and merge in UI.
-    // For now, let's keep it simple or do a second query.
-    if (role === 'normal') {
-        const { data: myRatings } = await supabase.from('ratings')
-            .select('store_id, rating')
-            .eq('user_id', userId);
-
-        const myRatingMap = new Map(myRatings?.map(r => [r.store_id, r.rating]));
-
-        result = stores.map(s => ({
-            ...s,
-            overallRating: s.rating, // View uses 'rating' column
-            myRating: myRatingMap.get(s.id) || null
-        }));
-    } else {
-        // Normalize fields if view names differ
-        result = stores.map(s => ({
-            ...s,
-            rating: s.rating // Ensure consistency
-        }));
+    // In-memory sort for rating
+    if (req.query.sort) {
+        const [field, order] = req.query.sort.split(':');
+        if (field === 'rating') {
+            result.sort((a, b) => {
+                const ra = a.rating || a.overallRating || 0;
+                const rb = b.rating || b.overallRating || 0;
+                return order === 'asc' ? ra - rb : rb - ra;
+            });
+        }
     }
 
     res.json(result);
@@ -153,8 +181,8 @@ exports.getStoreDashboard = async (req, res) => {
         storeName: store.name,
         averageRating: avg,
         ratings: ratings.map(r => ({
-            user: r.users?.name || 'Unknown User',
-            email: r.users?.email || 'N/A',
+            user: r.users.name,
+            email: r.users.email,
             rating: r.rating,
             date: r.updated_at
         }))

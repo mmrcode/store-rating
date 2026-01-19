@@ -29,6 +29,7 @@ async function seed() {
         // Check if exists
         const { data: existing } = await supabase.from('users').select('id').eq('email', u.email).single();
         if (existing) {
+            // console.log(`User ${u.email} already exists.`);
             userIds[u.email] = existing.id;
         } else {
             const { data, error } = await supabase.rpc('create_new_user', u);

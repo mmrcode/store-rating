@@ -1,20 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const storeController = require('../controllers/storeController');
-const { validateStore, validateRating } = require('../middleware/validationMiddleware');
-const { authMiddleware, requireRole } = require('../middleware/authMiddleware');
+const authMiddleware = require('../middleware/authMiddleware');
 
 // Public
-router.get('/', authMiddleware, storeController.getStores);
+router.get('/', authMiddleware.authMiddleware, storeController.getStores);
 
 // Normal User
-router.post('/rating', authMiddleware, requireRole(['normal']), validateRating, storeController.submitRating);
+router.post('/rating', authMiddleware.authMiddleware, authMiddleware.requireRole(['normal']), storeController.submitRating);
 
 // Admin
-router.get('/stats', authMiddleware, requireRole(['admin']), storeController.getStats);
-router.post('/', authMiddleware, requireRole(['admin']), validateStore, storeController.createStore);
+router.get('/stats', authMiddleware.authMiddleware, authMiddleware.requireRole(['admin']), storeController.getStats);
+router.post('/', authMiddleware.authMiddleware, authMiddleware.requireRole(['admin']), storeController.createStore);
 
 // Store Owner
-router.get('/dashboard', authMiddleware, requireRole(['store_owner']), storeController.getStoreDashboard);
+router.get('/dashboard', authMiddleware.authMiddleware, authMiddleware.requireRole(['store_owner']), storeController.getStoreDashboard);
 
 module.exports = router;
