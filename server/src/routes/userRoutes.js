@@ -3,6 +3,8 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 const { validateUser, validatePasswordChange } = require('../middleware/validationMiddleware');
 
+const { authMiddleware, requireRole } = require('../middleware/authMiddleware');
+
 router.use(authMiddleware);
 
 // Admin routes

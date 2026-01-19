@@ -66,63 +66,81 @@ store-rating/
 
 ## 🛠️ Setup & Installation
 
+Follow these steps to run the project locally. You will need **two separate terminal windows**: one for the backend (Server) and one for the frontend (Client).
+
 ### Prerequisites
-- Node.js (v14+)
-- Supabase Account
+- Node.js (v14 or higher) installed.
+- A Supabase project created.
 
 ### 1. Clone the Repository
-\`\`\`bash
+Open a terminal and run:
+```bash
 git clone https://github.com/mmrcode/store-rating.git
 cd store-rating
-\`\`\`
+```
 
-### 2. Backend Setup
-Navigate to the server directory and install dependencies:
-\`\`\`bash
-cd server
-npm install
-\`\`\`
+### 2. Backend Setup (Terminal 1)
+In your first terminal window, inside the `store-rating` folder:
 
-Create a \`.env\` file in the \`server\` directory:
-\`\`\`env
-PORT=3000
-SUPABASE_URL=your_supabase_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
-\`\`\`
+1. **Navigate to the server folder:**
+   ```bash
+   cd server
+   ```
 
-Start the backend server:
-\`\`\`bash
-npm start
-# OR for development
-npx nodemon index.js
-\`\`\`
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-### 3. Frontend Setup
-Navigate to the client directory and install dependencies:
-\`\`\`bash
-cd ../client
-npm install
-\`\`\`
+3. **Configure Environment:**
+   Create a file named `.env` in the `server` folder with the following content:
+   ```env
+   PORT=3000
+   SUPABASE_URL=your_supabase_project_url
+   SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
 
-Create a \`.env\` file in the \`client\` directory:
-\`\`\`env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-\`\`\`
+4. **Start the Server:**
+   ```bash
+   npm start
+   ```
+   > You should see: `Server running on port 3000`
 
-Start the frontend development server:
-\`\`\`bash
-npm run dev
-\`\`\`
+### 3. Frontend Setup (Terminal 2)
+Open a **new** terminal window, navigate to the `store-rating` folder, then:
+
+1. **Navigate to the client folder:**
+   ```bash
+   cd client
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment:**
+   Create a file named `.env` in the `client` folder:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_project_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
+
+4. **Start the Frontend:**
+   ```bash
+   npm run dev
+   ```
+   > You will see a local URL (e.g., `http://localhost:5173`). Open this link in your browser.
 
 ---
 
-## � Role Credentials (Test Accounts)
+## 🔐 Role Credentials (Test Accounts)
 
 Use the following credentials to test different user roles:
 
 | Role | Email | Password |
 | :--- | :--- | :--- |
+| **Store Owner** | `admin@store.com` | `Password123!` |
 | **Store Owner** | `owner1@store.com` | `Password123!` |
 | **Store Owner** | `owner2@store.com` | `Password123!` |
 | **Normal User** | `user1@test.com` | `Password123!` |
@@ -133,7 +151,7 @@ Use the following credentials to test different user roles:
 
 ---
 
-## �🗄️ Database Schema
+## 🗄️ Database Schema
 
 The application uses **Supabase (PostgreSQL)**. Here is the core schema design:
 

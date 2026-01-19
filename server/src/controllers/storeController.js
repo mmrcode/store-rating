@@ -153,8 +153,8 @@ exports.getStoreDashboard = async (req, res) => {
         storeName: store.name,
         averageRating: avg,
         ratings: ratings.map(r => ({
-            user: r.users.name,
-            email: r.users.email,
+            user: r.users?.name || 'Unknown User',
+            email: r.users?.email || 'N/A',
             rating: r.rating,
             date: r.updated_at
         }))
