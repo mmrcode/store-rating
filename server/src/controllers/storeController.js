@@ -159,11 +159,19 @@ exports.getStoreDashboard = async (req, res) => {
     const userId = req.user.id;
 
     // Find store owned by user
-    const { data: store, error: storeError } = await supabase.from('stores').select('*').eq('owner_id', userId).single();
+    // Fixed: Use limit(1) and maybeSingle() equivalent logic because an owner might have multiple stores (e.g. from seeding)
+    // and .single() throws error if more than one row is returned.
+    const { data: stores, error: storeError } = await supabase.from('stores').select('*').eq('owner_id', userId).limit(1);
 
-    if (storeError || !store) {
+    if (storeError) {
+        return res.status(400).json({ error: storeError.message });
+    }
+
+    if (!stores || stores.length === 0) {
         return res.status(404).json({ error: 'No store found for this owner' });
     }
+
+    const store = stores[0];
 
     // Get ratings with user details
     const { data: ratings, error: ratingsError } = await supabase.from('ratings')

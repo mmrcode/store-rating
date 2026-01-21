@@ -92,6 +92,14 @@ A full-stack web application that allows users to view stores, submit ratings (1
 -   `/client`: React Frontend
 -   `/server`: Express Backend
 
+## Troubleshooting
+
+If you encounter `EADDRINUSE: address already in use :::3000` when starting the server:
+```powershell
+netstat -ano | findstr :3000
+taskkill /PID <PID> /F
+```
+
 ## Credits
 
 Created by [mmrcode](https://github.com/mmrcode) and others.

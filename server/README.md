@@ -37,3 +37,14 @@ REST API built with Express and Supabase for the Store Rating application.
 | `PORT`              | Server Port (default 3000)    |
 | `SUPABASE_URL`      | Supabase Project URL          |
 | `SUPABASE_ANON_KEY` | Supabase Public/Anon Key      |
+
+## Troubleshooting
+
+### Port Already in Use (EADDRINUSE)
+If you see an error like `Error: listen EADDRINUSE: address already in use :::3000`, it means another process is using port 3000.
+
+To find and kill the process on Windows:
+```powershell
+netstat -ano | findstr :3000
+taskkill /PID <PID> /F
+```
